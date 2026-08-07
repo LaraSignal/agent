@@ -26,6 +26,13 @@ final class InstallCommand extends Command
             '--force' => false,
         ]);
 
+        $this->call('vendor:publish', [
+            '--tag' => 'larasignal-skill',
+            '--force' => false,
+        ]);
+
+        $this->components->info('Published LaraSignal AI coding skill to .agents/skills/larasignal/SKILL.md');
+
         $isInteractive = $this->input->isInteractive();
 
         // 1. API Key
@@ -107,7 +114,8 @@ final class InstallCommand extends Command
         if (preg_match("/^{$key}=.*/m", $content)) {
             $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
         } else {
-            $content .= PHP_EOL."{$key}={$value}".PHP_EOL;
+            $content = rtrim($content, "\r\n");
+            $content .= ($content !== '' ? PHP_EOL : '')."{$key}={$value}".PHP_EOL;
         }
 
         file_put_contents($envPath, $content);

@@ -75,12 +75,15 @@ final class AgentEventSubscriber
             });
         }
 
-        Event::listen('Illuminate\\Console\\Events\\*', function (string $name) {
-            $commandName = class_basename($name);
-            if ($this->isIgnoredCommand($commandName)) {
+        Event::listen('Illuminate\\Console\\Events\\*', function (string $name, array $data) {
+            $event = $data[0] ?? null;
+            $commandName = is_object($event) && isset($event->command) ? $event->command : class_basename($name);
+
+            if (! $commandName || $this->isIgnoredCommand($commandName)) {
                 return;
             }
-            $this->recorder->record('command', $commandName);
+
+            $this->recorder->record('command', (string) $commandName);
         });
 
         Event::listen('Illuminate\\Console\\Events\\ScheduledTask*', fn (string $name) => $this->recorder->record('schedule', class_basename($name)));

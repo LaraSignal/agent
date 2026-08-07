@@ -4,6 +4,7 @@ namespace LaraSignal\Agent\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use LaraSignal\Agent\Client;
 use Throwable;
 
 final class FlushSpoolCommand extends Command
@@ -43,6 +44,8 @@ final class FlushSpoolCommand extends Command
             }
 
             try {
+                Client::$sending = true;
+
                 $response = Http::withToken(config('larasignal.key'))
                     ->withBody(gzencode($content, 6), 'application/json')
                     ->withHeaders(['Content-Encoding' => 'gzip'])
@@ -59,6 +62,8 @@ final class FlushSpoolCommand extends Command
             } catch (Throwable $e) {
                 $this->error(sprintf('Error flushing %s: %s', basename($file), $e->getMessage()));
                 break;
+            } finally {
+                Client::$sending = false;
             }
         }
 

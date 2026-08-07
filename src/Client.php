@@ -23,11 +23,18 @@ final class Client
             'schema_version' => '1.0',
             'batch_id' => Str::uuid()->toString(),
             'sent_at' => now()->toIso8601String(),
-            'agent_version' => '0.1.0',
+            'agent_version' => '1.0.1',
             'environment' => config('larasignal.environment'),
             'release' => config('larasignal.release'),
             'events' => $events,
         ], JSON_THROW_ON_ERROR);
+
+        if (config('larasignal.async', false)) {
+            $this->spool($payload);
+            self::$sending = false;
+
+            return;
+        }
 
         try {
             Http::withToken(config('larasignal.key'))
@@ -46,8 +53,13 @@ final class Client
 
     private function spool(string $payload): void
     {
-        $path = config('larasignal.spool_path');
-        if (! $path || ! is_dir($path) || ! is_writable($path)) {
+        $path = config('larasignal.spool_path') ?: storage_path('app/larasignal/spool');
+
+        if (! is_dir($path)) {
+            @mkdir($path, 0755, true);
+        }
+
+        if (! is_dir($path) || ! is_writable($path)) {
             return;
         }
 

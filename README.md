@@ -24,11 +24,32 @@ php artisan larasignal:install --key=ls_live_a1b2c3... --sample-rate=1.0 --recor
 - `--record-queries=`: Enable/disable database query collection (`LARASIGNAL_RECORD_QUERIES=true|false`).
 - `--ingest-url=`: Custom ingestion endpoint (`LARASIGNAL_INGEST_URL`). Default: `https://larasignal.com/api/v1/ingest/batches`.
 
+---
+
+### Delivery Modes & Minimizing Response Latency
+
+LaraSignal is designed to minimize latency impact on user HTTP responses. You can choose between two delivery strategies:
+
+1. **End-of-Lifecycle Asynchronous Flushing (Default, `LARASIGNAL_ASYNC=false`)**:
+   Telemetry spans are buffered in memory and flushed asynchronously at the end of the HTTP request or queue job lifecycle (`app()->terminating()`) after the HTTP response has already been sent to the browser.
+
+2. **Background Batch Dispatcher (`LARASIGNAL_ASYNC=true` + `php artisan larasignal:run`)**:
+   Telemetry payloads are written directly to local disk spooling (`storage/app/larasignal/spool`) in 0ms and processed by a background worker process, completely isolating user HTTP responses from network ingestion latency.
+
+Run the background worker daemon:
+```bash
+php artisan larasignal:run --sleep=3
+```
+
+---
+
 ### Verification & CLI Tools
 - `php artisan larasignal:status`: Inspect current configuration and API key health.
 - `php artisan larasignal:test`: Dispatch a test telemetry event to verify ingestion.
 - `php artisan larasignal:deployment v1.2.0`: Record a deployment release event in LaraSignal.
 - `php artisan larasignal:flush`: Re-send offline spooled telemetry batches.
+- `php artisan larasignal:run`: Start the background telemetry worker process.
+- `php artisan larasignal:help`: Display CLI help summary and environment variable reference.
 
 ---
 
@@ -67,5 +88,3 @@ LaraSignal::user($user);
 
 #### 4. Automatic Log Ingestion
 Laravel logs (`Log::info()`, `Log::warning()`, `Log::error()`) are automatically captured as telemetry log spans with log level and context metadata (configurable via `LARASIGNAL_RECORD_LOGS=true`).
-
-

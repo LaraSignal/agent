@@ -6,7 +6,9 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\ServiceProvider;
 use LaraSignal\Agent\Console\DeploymentCommand;
 use LaraSignal\Agent\Console\FlushSpoolCommand;
+use LaraSignal\Agent\Console\HelpCommand;
 use LaraSignal\Agent\Console\InstallCommand;
+use LaraSignal\Agent\Console\RunCommand;
 use LaraSignal\Agent\Console\StatusCommand;
 use LaraSignal\Agent\Console\TestEventCommand;
 use LaraSignal\Agent\Http\Middleware\RecordRequest;
@@ -27,6 +29,11 @@ final class LaraSignalServiceProvider extends ServiceProvider
     {
         $this->publishes([__DIR__.'/../config/larasignal.php' => config_path('larasignal.php')], 'larasignal-config');
 
+        $this->publishes([
+            __DIR__.'/../stubs/larasignal-skill.md' => base_path('.agents/skills/larasignal/SKILL.md'),
+            __DIR__.'/../stubs/larasignal-rule.mdc' => base_path('.cursor/rules/larasignal.mdc'),
+        ], 'larasignal-skill');
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallCommand::class,
@@ -34,6 +41,8 @@ final class LaraSignalServiceProvider extends ServiceProvider
                 TestEventCommand::class,
                 FlushSpoolCommand::class,
                 DeploymentCommand::class,
+                HelpCommand::class,
+                RunCommand::class,
             ]);
         }
 
@@ -43,5 +52,9 @@ final class LaraSignalServiceProvider extends ServiceProvider
 
         $kernel->pushMiddleware(RecordRequest::class);
         $subscriber->register();
+
+        $this->app->terminating(function () {
+            $this->app->make(Recorder::class)->flush();
+        });
     }
 }
