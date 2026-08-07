@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'enabled' => env('LARASIGNAL_ENABLED', true),
+    'key' => env('LARASIGNAL_KEY'),
+    'ingest_url' => env('LARASIGNAL_INGEST_URL', 'https://larasignal.com/api/v1/ingest/batches'),
+    'environment' => env('LARASIGNAL_ENVIRONMENT', env('APP_ENV', 'production')),
+    'release' => env('LARASIGNAL_RELEASE'),
+    'sample_rate' => (float) env('LARASIGNAL_SAMPLE_RATE', 1),
+    'connect_timeout' => (float) env('LARASIGNAL_CONNECT_TIMEOUT', 1),
+    'timeout' => (float) env('LARASIGNAL_TIMEOUT', 3),
+    'batch_size' => (int) env('LARASIGNAL_BATCH_SIZE', 100),
+    'max_buffer' => (int) env('LARASIGNAL_MAX_BUFFER', 1000),
+    'ignored_routes' => ['larasignal/*', 'up', 'health'],
+    'record_queries' => env('LARASIGNAL_RECORD_QUERIES', true),
+    'record_logs' => env('LARASIGNAL_RECORD_LOGS', true),
+    'record_user' => env('LARASIGNAL_RECORD_USER', true),
+    'slow_query_threshold_ms' => (int) env('LARASIGNAL_SLOW_QUERY_THRESHOLD_MS', 0),
+    'slow_request_threshold_ms' => (int) env('LARASIGNAL_SLOW_REQUEST_THRESHOLD_MS', 0),
+    'ignored_exceptions' => [],
+    'ignored_commands' => ['larasignal:*', 'schedule:run', 'schedule:finish'],
+    'ignored_jobs' => [],
+    'allowed_request_fields' => [],
+    'spool_path' => env('LARASIGNAL_SPOOL_PATH'),
+];
