@@ -1,6 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Fixed recursive telemetry recording during database and authentication lookups that could exhaust PHP memory and return HTTP 500 responses.
+
 ## 1.2.0
+
 - Added built-in AI Agentic Coding Skill (`.agents/skills/larasignal-development/SKILL.md`) and Cursor rules (`.cursor/rules/larasignal.mdc`) publishing via `vendor:publish --tag=larasignal-skill`.
 
 ## 1.1.0

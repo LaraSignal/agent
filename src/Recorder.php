@@ -27,6 +27,8 @@ final class Recorder
 
     private ?string $traceId = null;
 
+    private bool $recording = false;
+
     public function __construct(private readonly Client $client, private readonly Redactor $redactor) {}
 
     public function filter(Closure $callback): self
@@ -122,48 +124,54 @@ final class Recorder
     /** @param array<string, mixed> $attributes */
     public function record(string $type, string $name, array $attributes = [], ?int $durationUs = null, ?string $status = null, bool $force = false): void
     {
-        if (! config('larasignal.enabled') || (! $force && ! $this->sampled())) {
+        if ($this->recording || ! config('larasignal.enabled') || (! $force && ! $this->sampled())) {
             return;
         }
 
-        if ($type === 'request') {
-            $thresholdMs = (int) config('larasignal.slow_request_threshold_ms', 0);
-            if ($thresholdMs > 0 && $durationUs !== null && ($durationUs / 1000) < $thresholdMs) {
-                return;
+        $this->recording = true;
+
+        try {
+            if ($type === 'request') {
+                $thresholdMs = (int) config('larasignal.slow_request_threshold_ms', 0);
+                if ($thresholdMs > 0 && $durationUs !== null && ($durationUs / 1000) < $thresholdMs) {
+                    return;
+                }
             }
-        }
 
-        foreach ($this->filters as $filter) {
-            if ($filter($type, $name, $attributes, $durationUs, $status) === false) {
-                return;
+            foreach ($this->filters as $filter) {
+                if ($filter($type, $name, $attributes, $durationUs, $status) === false) {
+                    return;
+                }
             }
-        }
 
-        if (count($this->events) >= config('larasignal.max_buffer', 1000)) {
-            array_shift($this->events);
-        }
+            if (count($this->events) >= config('larasignal.max_buffer', 1000)) {
+                array_shift($this->events);
+            }
 
-        $mergedAttributes = array_merge($attributes, [
-            '_context' => $this->context,
-            '_tags' => $this->tags,
-            '_user' => $this->resolveUser(),
-        ]);
+            $mergedAttributes = array_merge($attributes, [
+                '_context' => $this->context,
+                '_tags' => $this->tags,
+                '_user' => $this->resolveUser(),
+            ]);
 
-        $this->events[] = [
-            'id' => Str::uuid()->toString(),
-            'type' => $type,
-            'name' => mb_substr($name, 0, 255),
-            'occurred_at' => now()->toIso8601String(),
-            'trace_id' => $this->traceId ?: $this->startTrace(),
-            'span_id' => Str::lower(Str::random(16)),
-            'duration_us' => $durationUs,
-            'status' => $status,
-            'release' => config('larasignal.release'),
-            'attributes' => $this->redactor->redact($mergedAttributes),
-        ];
+            $this->events[] = [
+                'id' => Str::uuid()->toString(),
+                'type' => $type,
+                'name' => mb_substr($name, 0, 255),
+                'occurred_at' => now()->toIso8601String(),
+                'trace_id' => $this->traceId ?: $this->startTrace(),
+                'span_id' => Str::lower(Str::random(16)),
+                'duration_us' => $durationUs,
+                'status' => $status,
+                'release' => config('larasignal.release'),
+                'attributes' => $this->redactor->redact($mergedAttributes),
+            ];
 
-        if (count($this->events) >= config('larasignal.batch_size', 100)) {
-            $this->flush();
+            if (count($this->events) >= config('larasignal.batch_size', 100)) {
+                $this->flush();
+            }
+        } finally {
+            $this->recording = false;
         }
     }
 
