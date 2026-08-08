@@ -31,7 +31,7 @@ final class InstallCommand extends Command
             '--force' => false,
         ]);
 
-        $this->components->info('Published LaraSignal AI coding skill to .agents/skills/larasignal/SKILL.md');
+        $this->components->info('Published LaraSignal AI coding skill to .agents/skills/larasignal-development/SKILL.md');
 
         $isInteractive = $this->input->isInteractive();
 

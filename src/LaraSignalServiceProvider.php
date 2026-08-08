@@ -30,7 +30,7 @@ final class LaraSignalServiceProvider extends ServiceProvider
         $this->publishes([__DIR__.'/../config/larasignal.php' => config_path('larasignal.php')], 'larasignal-config');
 
         $this->publishes([
-            __DIR__.'/../stubs/larasignal-skill.md' => base_path('.agents/skills/larasignal/SKILL.md'),
+            __DIR__.'/../stubs/larasignal-development.md' => base_path('.agents/skills/larasignal-development/SKILL.md'),
             __DIR__.'/../stubs/larasignal-rule.mdc' => base_path('.cursor/rules/larasignal.mdc'),
         ], 'larasignal-skill');
 
