@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- 
+
+## 1.5.0
 - Added scheduled-task identity, cron expression, next run, timezone, outcome, exit code, safety flags, environments, memory, exception, and duration telemetry.
 - Added command exit code, redacted arguments and options, peak memory, completion status, and execution duration telemetry for command investigations.
 - Added queue connection, queue name, attempt, job ID, outcome, exception, release backoff, and execution duration telemetry for job investigations.
