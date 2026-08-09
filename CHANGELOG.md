@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-- 
+-
+
+## 1.6.0
+- Fixed framework exceptions raised outside request middleware, including missing application key failures during HTTP termination, not being sent before the process exits.
 
 ## 1.5.0
 - Added scheduled-task identity, cron expression, next run, timezone, outcome, exit code, safety flags, environments, memory, exception, and duration telemetry.

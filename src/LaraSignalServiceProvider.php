@@ -2,7 +2,9 @@
 
 namespace LaraSignal\Agent;
 
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Exceptions\Handler as FrameworkExceptionHandler;
 use Illuminate\Support\ServiceProvider;
 use LaraSignal\Agent\Console\DeploymentCommand;
 use LaraSignal\Agent\Console\FlushSpoolCommand;
@@ -13,6 +15,7 @@ use LaraSignal\Agent\Console\StatusCommand;
 use LaraSignal\Agent\Console\TestEventCommand;
 use LaraSignal\Agent\Http\Middleware\RecordRequest;
 use LaraSignal\Agent\Support\Redactor;
+use Throwable;
 
 final class LaraSignalServiceProvider extends ServiceProvider
 {
@@ -25,7 +28,7 @@ final class LaraSignalServiceProvider extends ServiceProvider
         $this->app->singleton(AgentEventSubscriber::class);
     }
 
-    public function boot(Kernel $kernel, AgentEventSubscriber $subscriber): void
+    public function boot(Kernel $kernel, ExceptionHandler $exceptionHandler, AgentEventSubscriber $subscriber): void
     {
         $this->publishes([__DIR__.'/../config/larasignal.php' => config_path('larasignal.php')], 'larasignal-config');
 
@@ -44,6 +47,14 @@ final class LaraSignalServiceProvider extends ServiceProvider
                 HelpCommand::class,
                 RunCommand::class,
             ]);
+        }
+
+        if ($exceptionHandler instanceof FrameworkExceptionHandler) {
+            $exceptionHandler->reportable(function (Throwable $exception): void {
+                $recorder = $this->app->make(Recorder::class);
+                $recorder->exception($exception);
+                $recorder->flush();
+            });
         }
 
         if (! config('larasignal.enabled')) {
