@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+-
+
+## 1.7.0
 - Added independent environment switches for request, job, command, scheduled task, exception, query, notification, mail, cache, outgoing request, custom event, and user telemetry.
 
 ## 1.6.0
