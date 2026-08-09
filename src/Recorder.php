@@ -166,6 +166,7 @@ final class Recorder
                 'status' => $status,
                 'severity' => $severity,
                 'release' => config('larasignal.release'),
+                'route' => $attributes['route'] ?? null,
                 'attributes' => $this->redactor->redact($mergedAttributes),
             ];
 

@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
--
+- Added scheduled-task identity, cron expression, next run, timezone, outcome, exit code, safety flags, environments, memory, exception, and duration telemetry.
+- Added command exit code, redacted arguments and options, peak memory, completion status, and execution duration telemetry for command investigations.
+- Added queue connection, queue name, attempt, job ID, outcome, exception, release backoff, and execution duration telemetry for job investigations.
+- Added request route, path, query, redacted headers, middleware, controller, response size, and peak memory telemetry for request investigation views.
 
 ## 1.4.0
 - Fixed `larasignal:test` sending buffered bootstrap telemetry so each run delivers only one verification event.

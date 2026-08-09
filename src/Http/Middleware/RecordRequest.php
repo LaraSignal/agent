@@ -25,9 +25,19 @@ final class RecordRequest
 
         try {
             $response = $next($request);
+            $route = $request->route();
             $this->recorder->record('request', $request->method().' '.($request->route()?->uri() ?? $request->path()), [
                 'method' => $request->method(),
-                'route' => $request->route()?->uri(),
+                'route' => $route?->uri(),
+                'path' => '/'.ltrim($request->path(), '/'),
+                'url' => $request->getSchemeAndHttpHost().'/'.ltrim($request->path(), '/'),
+                'query' => $request->query(),
+                'request_headers' => $request->headers->all(),
+                'response_headers' => $response->headers->all(),
+                'middleware' => $route?->gatherMiddleware() ?? [],
+                'controller' => $route?->getActionName(),
+                'response_size' => strlen((string) $response->getContent()),
+                'peak_memory_bytes' => memory_get_peak_usage(true),
             ], intdiv(hrtime(true) - $started, 1000), (string) $response->getStatusCode());
 
             return $response;
