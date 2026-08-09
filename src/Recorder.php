@@ -95,6 +95,7 @@ final class Recorder
         return $this;
     }
 
+    /** @param array<string, mixed> $attributes */
     public function event(string $name, array $attributes = []): void
     {
         $this->record('event', $name, $attributes, status: 'completed');
@@ -122,7 +123,7 @@ final class Recorder
     }
 
     /** @param array<string, mixed> $attributes */
-    public function record(string $type, string $name, array $attributes = [], ?int $durationUs = null, ?string $status = null, bool $force = false): void
+    public function record(string $type, string $name, array $attributes = [], ?int $durationUs = null, ?string $status = null, bool $force = false, ?string $severity = null): void
     {
         if ($this->recording || ! config('larasignal.enabled') || (! $force && ! $this->sampled())) {
             return;
@@ -163,6 +164,7 @@ final class Recorder
                 'span_id' => Str::lower(Str::random(16)),
                 'duration_us' => $durationUs,
                 'status' => $status,
+                'severity' => $severity,
                 'release' => config('larasignal.release'),
                 'attributes' => $this->redactor->redact($mergedAttributes),
             ];
@@ -175,6 +177,7 @@ final class Recorder
         }
     }
 
+    /** @param array<string, mixed> $context */
     public function exception(Throwable $exception, array $context = []): void
     {
         foreach (config('larasignal.ignored_exceptions', []) as $ignoredClass) {
@@ -203,6 +206,12 @@ final class Recorder
         $this->client->send($events);
     }
 
+    public function discardPendingEvents(): void
+    {
+        $this->events = [];
+    }
+
+    /** @return array<string, mixed>|null */
     private function resolveUser(): ?array
     {
         if ($this->user !== null) {
@@ -216,7 +225,7 @@ final class Recorder
         try {
             if (Auth::check() && ($user = Auth::user())) {
                 return array_filter([
-                    'id' => method_exists($user, 'getKey') ? $user->getKey() : ($user->id ?? null),
+                    'id' => $user->getKey(),
                     'email' => $user->email ?? null,
                 ]);
             }

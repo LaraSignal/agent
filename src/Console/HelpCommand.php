@@ -21,6 +21,7 @@ final class HelpCommand extends Command
         $this->components->twoColumnDetail('larasignal:install', 'Install agent env settings & AI coding skill');
         $this->components->twoColumnDetail('larasignal:status', 'Show current agent configuration & connectivity status');
         $this->components->twoColumnDetail('larasignal:test', 'Send a safe test telemetry event to verify setup');
+        $this->components->twoColumnDetail('larasignal:test --all', 'Send representative telemetry for every activity category');
         $this->components->twoColumnDetail('larasignal:deployment [release]', 'Record a deployment release event');
         $this->components->twoColumnDetail('larasignal:flush', 'Flush spooled telemetry batches from disk');
         $this->components->twoColumnDetail('larasignal:run [--sleep=3] [--once]', 'Run background telemetry worker process');

@@ -6,6 +6,8 @@ use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Client\Events\ResponseReceived;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Notifications\Events\NotificationFailed;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -57,6 +59,8 @@ final class AgentEventSubscriber
         });
 
         Event::listen(MessageSent::class, fn ($event) => $this->recorder->record('mail', $event->message::class, ['phase' => 'sent'], status: 'completed'));
+        Event::listen(NotificationSent::class, fn (NotificationSent $event) => $this->recorder->record('notification', $event->notification::class, ['channel' => $event->channel], status: 'completed'));
+        Event::listen(NotificationFailed::class, fn (NotificationFailed $event) => $this->recorder->record('notification', $event->notification::class, ['channel' => $event->channel], status: 'failed'));
         Event::listen(ResponseReceived::class, function ($event) {
             if (Client::$sending) {
                 return;
@@ -71,7 +75,7 @@ final class AgentEventSubscriber
                 $this->recorder->record('log', $event->message, [
                     'level' => $event->level,
                     'context' => $event->context,
-                ], status: $event->level === 'error' ? 'failed' : 'completed');
+                ], status: $event->level === 'error' ? 'failed' : 'completed', severity: $event->level);
             });
         }
 
@@ -91,6 +95,10 @@ final class AgentEventSubscriber
 
     private function isIgnoredCommand(string $command): bool
     {
+        if (Str::is('larasignal:*', $command)) {
+            return true;
+        }
+
         foreach (config('larasignal.ignored_commands', []) as $pattern) {
             if (Str::is($pattern, $command)) {
                 return true;

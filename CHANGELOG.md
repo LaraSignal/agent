@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+- Fixed `larasignal:test` sending buffered bootstrap telemetry so each run delivers only one verification event.
+- Added `larasignal:test --all` to send representative telemetry for every activity category.
+- Added notification capture and log severity metadata so those activity pages receive filterable events.
+
 ## 1.3.0
 
 - Fixed recursive telemetry recording during database and authentication lookups that could exhaust PHP memory and return HTTP 500 responses.
