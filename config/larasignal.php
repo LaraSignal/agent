@@ -119,7 +119,17 @@ return [
     |
     */
     'ignored_routes' => ['larasignal/*', 'up', 'health'],
+    'record_requests' => env('LARASIGNAL_RECORD_REQUESTS', true),
+    'record_jobs' => env('LARASIGNAL_RECORD_JOBS', true),
+    'record_commands' => env('LARASIGNAL_RECORD_COMMANDS', true),
+    'record_scheduled_tasks' => env('LARASIGNAL_RECORD_SCHEDULED_TASKS', true),
+    'record_exceptions' => env('LARASIGNAL_RECORD_EXCEPTIONS', true),
     'record_queries' => env('LARASIGNAL_RECORD_QUERIES', true),
+    'record_notifications' => env('LARASIGNAL_RECORD_NOTIFICATIONS', true),
+    'record_mail' => env('LARASIGNAL_RECORD_MAIL', true),
+    'record_cache' => env('LARASIGNAL_RECORD_CACHE', true),
+    'record_outgoing_requests' => env('LARASIGNAL_RECORD_OUTGOING_REQUESTS', true),
+    'record_custom_events' => env('LARASIGNAL_RECORD_CUSTOM_EVENTS', true),
     'record_logs' => env('LARASIGNAL_RECORD_LOGS', true),
     'record_user' => env('LARASIGNAL_RECORD_USER', true),
     'slow_query_threshold_ms' => (int) env('LARASIGNAL_SLOW_QUERY_THRESHOLD_MS', 0),

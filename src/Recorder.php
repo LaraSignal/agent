@@ -125,7 +125,7 @@ final class Recorder
     /** @param array<string, mixed> $attributes */
     public function record(string $type, string $name, array $attributes = [], ?int $durationUs = null, ?string $status = null, bool $force = false, ?string $severity = null): void
     {
-        if ($this->recording || ! config('larasignal.enabled') || (! $force && ! $this->sampled())) {
+        if ($this->recording || ! config('larasignal.enabled') || ! $this->recordsType($type) || (! $force && ! $this->sampled())) {
             return;
         }
 
@@ -215,12 +215,12 @@ final class Recorder
     /** @return array<string, mixed>|null */
     private function resolveUser(): ?array
     {
-        if ($this->user !== null) {
-            return $this->user;
-        }
-
         if (! config('larasignal.record_user', true)) {
             return null;
+        }
+
+        if ($this->user !== null) {
+            return $this->user;
         }
 
         try {
@@ -235,6 +235,26 @@ final class Recorder
         }
 
         return null;
+    }
+
+    private function recordsType(string $type): bool
+    {
+        $configurationKey = match ($type) {
+            'request' => 'record_requests',
+            'job' => 'record_jobs',
+            'command' => 'record_commands',
+            'schedule' => 'record_scheduled_tasks',
+            'exception' => 'record_exceptions',
+            'query' => 'record_queries',
+            'notification' => 'record_notifications',
+            'mail' => 'record_mail',
+            'cache' => 'record_cache',
+            'http' => 'record_outgoing_requests',
+            'event' => 'record_custom_events',
+            default => null,
+        };
+
+        return $configurationKey === null || (bool) config('larasignal.'.$configurationKey, true);
     }
 
     private function sampled(): bool

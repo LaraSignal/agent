@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
--
+- Added independent environment switches for request, job, command, scheduled task, exception, query, notification, mail, cache, outgoing request, custom event, and user telemetry.
 
 ## 1.6.0
 - Fixed framework exceptions raised outside request middleware, including missing application key failures during HTTP termination, not being sent before the process exits.
