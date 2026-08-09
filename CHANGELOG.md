@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+-
+
+## 1.4.0
 - Fixed `larasignal:test` sending buffered bootstrap telemetry so each run delivers only one verification event.
 - Added `larasignal:test --all` to send representative telemetry for every activity category.
 - Added notification capture and log severity metadata so those activity pages receive filterable events.
