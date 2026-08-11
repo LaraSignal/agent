@@ -14,6 +14,8 @@ final class DeploymentCommand extends Command
 
     public function handle(Recorder $recorder): int
     {
+        $recorder->discardPendingEvents();
+
         $release = $this->argument('release')
             ?: config('larasignal.release')
             ?: $this->detectGitCommitHash()
@@ -25,7 +27,7 @@ final class DeploymentCommand extends Command
             'release' => $release,
             'environment' => config('larasignal.environment'),
             'timestamp' => now()->toIso8601String(),
-        ], force: true);
+        ], status: 'completed', force: true);
 
         $recorder->flush();
 

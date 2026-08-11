@@ -109,6 +109,7 @@ return [
     */
     'batch_size' => (int) env('LARASIGNAL_BATCH_SIZE', 100),
     'max_buffer' => (int) env('LARASIGNAL_MAX_BUFFER', 1000),
+    'max_exception_message_length' => (int) env('LARASIGNAL_MAX_EXCEPTION_MESSAGE_LENGTH', 65536),
 
     /*
     |--------------------------------------------------------------------------
@@ -130,6 +131,15 @@ return [
     'record_cache' => env('LARASIGNAL_RECORD_CACHE', true),
     'record_outgoing_requests' => env('LARASIGNAL_RECORD_OUTGOING_REQUESTS', true),
     'record_custom_events' => env('LARASIGNAL_RECORD_CUSTOM_EVENTS', true),
+    'record_broadcasts' => env('LARASIGNAL_RECORD_BROADCASTS', true),
+    'record_spans' => env('LARASIGNAL_RECORD_SPANS', true),
+    'record_deployments' => env('LARASIGNAL_RECORD_DEPLOYMENTS', true),
+    'record_authentication' => env('LARASIGNAL_RECORD_AUTHENTICATION', true),
+    'record_security' => env('LARASIGNAL_RECORD_SECURITY', true),
+    'record_queue_health' => env('LARASIGNAL_RECORD_QUEUE_HEALTH', true),
+    'record_transactions' => env('LARASIGNAL_RECORD_TRANSACTIONS', true),
+    'record_storage' => env('LARASIGNAL_RECORD_STORAGE', true),
+    'record_runtime' => env('LARASIGNAL_RECORD_RUNTIME', true),
     'record_logs' => env('LARASIGNAL_RECORD_LOGS', true),
     'record_user' => env('LARASIGNAL_RECORD_USER', true),
     'slow_query_threshold_ms' => (int) env('LARASIGNAL_SLOW_QUERY_THRESHOLD_MS', 0),

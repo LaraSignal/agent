@@ -3,6 +3,14 @@
 ## Unreleased
 -
 
+## 1.8.0
+- Added first-class span, deployment, authentication, security, queue health, transaction, storage, and runtime telemetry with Activity analytics and configuration switches.
+- Added automatic authentication lifecycle, authorization denial, rate-limit, queue timeout/busy/failover, worker lifecycle, database transaction/health, typed cache outcome, HTTP connection failure, and mail duration/failure capture.
+- Added privacy-safe storage measurement, runtime gauge, and external broadcast provider metric APIs.
+- Added first-class process heartbeats with missed-heartbeat visibility and a schedulable `larasignal:heartbeat` command.
+- Added broadcast publication and Reverb lifecycle telemetry with provider, connection, channel, outcome, failure, queue, attempt, and duration details.
+- Added safe structured stack frames to exception telemetry and increased the configurable exception message limit to 64 KiB so issue investigations retain complete error details.
+
 ## 1.7.0
 - Added independent environment switches for request, job, command, scheduled task, exception, query, notification, mail, cache, outgoing request, custom event, and user telemetry.
 

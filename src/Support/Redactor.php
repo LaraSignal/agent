@@ -23,7 +23,11 @@ final class Redactor
             } elseif (is_int($item) || is_float($item) || is_bool($item) || $item === null) {
                 $result[$key] = $item;
             } elseif (is_string($item)) {
-                $result[$key] = mb_substr($item, 0, 1000);
+                $limit = $normalized === 'message'
+                    ? (int) config('larasignal.max_exception_message_length', 65536)
+                    : 1000;
+
+                $result[$key] = mb_substr($item, 0, $limit);
             }
         }
 

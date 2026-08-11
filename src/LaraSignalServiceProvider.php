@@ -8,6 +8,7 @@ use Illuminate\Foundation\Exceptions\Handler as FrameworkExceptionHandler;
 use Illuminate\Support\ServiceProvider;
 use LaraSignal\Agent\Console\DeploymentCommand;
 use LaraSignal\Agent\Console\FlushSpoolCommand;
+use LaraSignal\Agent\Console\HeartbeatCommand;
 use LaraSignal\Agent\Console\HelpCommand;
 use LaraSignal\Agent\Console\InstallCommand;
 use LaraSignal\Agent\Console\RunCommand;
@@ -43,6 +44,7 @@ final class LaraSignalServiceProvider extends ServiceProvider
                 StatusCommand::class,
                 TestEventCommand::class,
                 FlushSpoolCommand::class,
+                HeartbeatCommand::class,
                 DeploymentCommand::class,
                 HelpCommand::class,
                 RunCommand::class,

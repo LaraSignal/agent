@@ -88,3 +88,22 @@ LaraSignal::user($user);
 
 #### 4. Automatic Log Ingestion
 Laravel logs (`Log::info()`, `Log::warning()`, `Log::error()`) are automatically captured as telemetry log spans with log level and context metadata (configurable via `LARASIGNAL_RECORD_LOGS=true`).
+
+#### 5. Storage, Runtime & Provider Metrics
+Measure filesystem operations without transmitting object paths:
+```php
+$document = LaraSignal::storage('read', 's3', $path, fn () => Storage::disk('s3')->get($path), [
+    'size_bytes' => Storage::disk('s3')->size($path),
+]);
+```
+
+Report application or worker health gauges and provider-supplied WebSocket totals:
+```php
+LaraSignal::runtime('Application runtime', ['uptime_seconds' => 3600]);
+LaraSignal::heartbeat('scheduler', 60);
+LaraSignal::broadcastMetric('pusher', connections: 125, messages: 4800, attributes: ['cluster' => 'ap1']);
+```
+
+Schedule `php artisan larasignal:heartbeat scheduler --every=60` at the same interval to surface healthy and missed scheduler heartbeats in Runtime health.
+
+Authentication, authorization denials, throttled requests, queue health, database transactions, cache outcomes, HTTP connection failures, deployments, spans, and Laravel worker lifecycle events are captured automatically.

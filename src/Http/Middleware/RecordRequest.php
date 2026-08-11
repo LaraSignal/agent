@@ -38,6 +38,15 @@ final class RecordRequest
             'peak_memory_bytes' => memory_get_peak_usage(true),
         ], intdiv(hrtime(true) - $started, 1000), (string) $response->getStatusCode());
 
+        if ($response->getStatusCode() === 429) {
+            $this->recorder->record('security', 'Rate limit exceeded', [
+                'phase' => 'rate_limited',
+                'method' => $request->method(),
+                'route' => $route?->uri(),
+                'retry_after' => $response->headers->get('Retry-After'),
+            ], status: 'failed', severity: 'warning');
+        }
+
         return $response;
     }
 

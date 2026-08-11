@@ -56,6 +56,15 @@ final class TestEventCommand extends Command
             ['type' => 'cache', 'name' => 'cache.hit', 'status' => 'completed', 'duration_us' => 1_000, 'attributes' => ['key' => 'larasignal-activity-test']],
             ['type' => 'http', 'name' => 'GET example.com', 'status' => '200', 'duration_us' => 15_000, 'attributes' => ['host' => 'example.com', 'url' => 'https://example.com/larasignal-test']],
             ['type' => 'event', 'name' => 'LaraSignalActivityTestEvent', 'status' => 'completed', 'attributes' => ['source' => 'larasignal:test']],
+            ['type' => 'broadcast', 'name' => 'LaraSignalActivityTestBroadcast', 'status' => 'completed', 'duration_us' => 6_000, 'attributes' => ['phase' => 'published', 'provider' => 'reverb', 'broadcast_connections' => ['reverb'], 'channels' => ['larasignal-test']]],
+            ['type' => 'span', 'name' => 'LaraSignalActivityTestSpan', 'status' => 'completed', 'duration_us' => 7_000],
+            ['type' => 'deployment', 'name' => 'Release test', 'status' => 'completed', 'attributes' => ['release' => 'test']],
+            ['type' => 'authentication', 'name' => 'Login', 'status' => 'completed', 'attributes' => ['phase' => 'login', 'guard' => 'web']],
+            ['type' => 'security', 'name' => 'Authorization denied', 'status' => 'failed', 'severity' => 'warning', 'attributes' => ['phase' => 'authorization_denied', 'ability' => 'update']],
+            ['type' => 'queue', 'name' => 'default', 'status' => 'completed', 'attributes' => ['phase' => 'queued', 'connection' => 'database', 'queue' => 'default']],
+            ['type' => 'transaction', 'name' => 'mysql', 'status' => 'completed', 'duration_us' => 2_000, 'attributes' => ['phase' => 'committed', 'connection' => 'mysql']],
+            ['type' => 'storage', 'name' => 'write', 'status' => 'completed', 'duration_us' => 3_000, 'attributes' => ['operation' => 'write', 'disk' => 's3', 'extension' => 'pdf']],
+            ['type' => 'runtime', 'name' => 'Queue worker started', 'status' => 'completed', 'attributes' => ['phase' => 'worker_started', 'memory_mb' => 32]],
             ['type' => 'log', 'name' => 'LaraSignal activity test log', 'status' => 'completed', 'severity' => 'info', 'attributes' => ['level' => 'info']],
         ];
     }

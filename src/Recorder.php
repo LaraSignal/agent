@@ -117,6 +117,59 @@ final class Recorder
         }
     }
 
+    /** @param array<string, mixed> $attributes */
+    public function storage(string $operation, string $disk, string $path, Closure $callback, array $attributes = []): mixed
+    {
+        $started = hrtime(true);
+        $status = 'completed';
+
+        try {
+            return $callback();
+        } catch (Throwable $exception) {
+            $status = 'failed';
+            $attributes['exception'] = $exception::class;
+            $attributes['message'] = $exception->getMessage();
+            throw $exception;
+        } finally {
+            $this->record('storage', $operation, array_merge([
+                'operation' => $operation,
+                'disk' => $disk,
+                'path_hash' => hash('sha256', $path),
+                'extension' => pathinfo($path, PATHINFO_EXTENSION) ?: null,
+            ], $attributes), intdiv(hrtime(true) - $started, 1000), $status);
+        }
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function runtime(string $name, array $attributes = [], string $status = 'completed'): void
+    {
+        $this->record('runtime', $name, array_merge([
+            'memory_bytes' => memory_get_usage(true),
+            'peak_memory_bytes' => memory_get_peak_usage(true),
+        ], $attributes), status: $status);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function heartbeat(string $name = 'scheduler', int $expectedEverySeconds = 60, array $attributes = []): void
+    {
+        $this->runtime(Str::headline($name).' heartbeat', array_merge([
+            'phase' => 'heartbeat',
+            'heartbeat' => $name,
+            'expected_every_seconds' => max(1, $expectedEverySeconds),
+        ], $attributes));
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function broadcastMetric(string $provider, int $connections, ?int $messages = null, array $attributes = []): void
+    {
+        $this->record('broadcast', Str::headline($provider).' provider metrics', array_merge([
+            'phase' => 'provider_metrics',
+            'provider' => $provider,
+            'connection_count' => $connections,
+            'message_count' => $messages,
+        ], $attributes), status: 'completed');
+    }
+
     public function startTrace(?string $traceId = null): string
     {
         return $this->traceId = $traceId ?: Str::uuid()->toString();
@@ -192,8 +245,27 @@ final class Recorder
             'message' => $exception->getMessage(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
+            'frames' => $this->exceptionFrames($exception),
             'context' => $context,
         ], status: 'failed', force: true);
+    }
+
+    /** @return array<int, array{file: string|null, line: int|null, class: string|null, function: string|null, type: string|null}> */
+    private function exceptionFrames(Throwable $exception): array
+    {
+        return collect($exception->getTrace())
+            ->prepend([
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ])
+            ->map(fn (array $frame): array => [
+                'file' => isset($frame['file']) ? (string) $frame['file'] : null,
+                'line' => isset($frame['line']) ? (int) $frame['line'] : null,
+                'class' => isset($frame['class']) ? (string) $frame['class'] : null,
+                'function' => isset($frame['function']) ? (string) $frame['function'] : null,
+                'type' => isset($frame['type']) ? (string) $frame['type'] : null,
+            ])
+            ->all();
     }
 
     public function flush(): void
@@ -251,6 +323,15 @@ final class Recorder
             'cache' => 'record_cache',
             'http' => 'record_outgoing_requests',
             'event' => 'record_custom_events',
+            'broadcast' => 'record_broadcasts',
+            'span' => 'record_spans',
+            'deployment' => 'record_deployments',
+            'authentication' => 'record_authentication',
+            'security' => 'record_security',
+            'queue' => 'record_queue_health',
+            'transaction' => 'record_transactions',
+            'storage' => 'record_storage',
+            'runtime' => 'record_runtime',
             default => null,
         };
 

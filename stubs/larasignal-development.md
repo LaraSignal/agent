@@ -76,6 +76,16 @@ try {
 }
 ```
 
+### 6. Storage & Runtime Telemetry
+Use `LaraSignal::storage()` to measure filesystem calls without sending raw object paths, `LaraSignal::runtime()` for application gauges, `LaraSignal::heartbeat()` for missed-process detection, and `LaraSignal::broadcastMetric()` for connection/message totals supplied by Reverb, Pusher, or Ably.
+
+```php
+$contents = LaraSignal::storage('read', 's3', $path, fn () => Storage::disk('s3')->get($path));
+LaraSignal::runtime('Application runtime', ['uptime_seconds' => 3600]);
+LaraSignal::heartbeat('scheduler', 60);
+LaraSignal::broadcastMetric('ably', connections: 80, messages: 2400);
+```
+
 ## Best Practices
 - Always use `LaraSignal::measure()` for 3rd-party network calls so slow downstream APIs are visible in performance traces.
 - Use `LaraSignal::context()` early in request middleware or job handlers to tag tenant/account data.
