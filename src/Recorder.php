@@ -3,6 +3,7 @@
 namespace LaraSignal\Agent;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use LaraSignal\Agent\Support\Redactor;
@@ -178,7 +179,7 @@ final class Recorder
     /** @param array<string, mixed> $attributes */
     public function record(string $type, string $name, array $attributes = [], ?int $durationUs = null, ?string $status = null, bool $force = false, ?string $severity = null): void
     {
-        if ($this->recording || ! config('larasignal.enabled') || ! $this->recordsType($type) || (! $force && ! $this->sampled())) {
+        if ($this->recording || $this->isIngestionRequest() || ! config('larasignal.enabled') || ! $this->recordsType($type) || (! $force && ! $this->sampled())) {
             return;
         }
 
@@ -344,5 +345,18 @@ final class Recorder
         $trace = $this->traceId ?: $this->startTrace();
 
         return (hexdec(substr(hash('sha256', $trace), 0, 8)) / 0xFFFFFFFF) < $rate;
+    }
+
+    private function isIngestionRequest(): bool
+    {
+        if (! app()->bound('request') || ! app('request') instanceof Request) {
+            return false;
+        }
+
+        $ingestionPath = parse_url((string) config('larasignal.ingest_url'), PHP_URL_PATH);
+
+        return is_string($ingestionPath)
+            && $ingestionPath !== ''
+            && app('request')->is(ltrim($ingestionPath, '/'));
     }
 }

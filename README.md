@@ -2,6 +2,17 @@
 
 Privacy-first Laravel telemetry agent for LaraSignal.
 
+## Compatibility
+
+LaraSignal supports PHP 8.2 or newer and Laravel 10, 11, 12, and 13. The package adapts queue and HTTP event telemetry to each framework version, collecting newer event metadata only when Laravel exposes it.
+
+| Laravel | Support |
+| --- | --- |
+| 10.x | Supported |
+| 11.x | Supported |
+| 12.x | Supported |
+| 13.x | Supported |
+
 ```bash
 composer require larasignal/agent
 ```

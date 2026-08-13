@@ -3,6 +3,15 @@
 ## Unreleased
 -
 
+## 1.10.0
+- Added privacy-safe authentication request context with route, controller, method, path, hashed IP address, and user agent details.
+- Added optional Laravel Passport access and refresh token lifecycle telemetry with user, OAuth client, and hashed credential identifiers without requiring Passport as a dependency.
+- Added sanitized redirect destinations to request telemetry while removing OAuth codes, state values, and other query parameters from redirect headers.
+- Verified Laravel 10, 11, 12, and 13 compatibility and adapted queued notifications, released jobs, busy queues, failed HTTP connections, and stopping queue workers to each version's available event metadata.
+
+## 1.9.0
+- Fixed recursive self-monitoring of the configured ingestion endpoint that could saturate CPU and cause HTTP 504 responses for LaraSignal and connected applications.
+
 ## 1.8.0
 - Added first-class span, deployment, authentication, security, queue health, transaction, storage, and runtime telemetry with Activity analytics and configuration switches.
 - Added automatic authentication lifecycle, authorization denial, rate-limit, queue timeout/busy/failover, worker lifecycle, database transaction/health, typed cache outcome, HTTP connection failure, and mail duration/failure capture.

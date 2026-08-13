@@ -22,6 +22,7 @@ use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Http\Client\Events\ConnectionFailed;
 use Illuminate\Http\Client\Events\RequestSending;
 use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Http\Request;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
@@ -123,10 +124,11 @@ final class AgentEventSubscriber
                 return;
             }
 
-            $attributes = ['backoff' => $event->backoff];
-            if ($event->exception) {
-                $attributes['exception'] = $event->exception::class;
-                $attributes['message'] = $event->exception->getMessage();
+            $exception = data_get($event, 'exception');
+            $attributes = ['backoff' => data_get($event, 'backoff')];
+            if ($exception instanceof Throwable) {
+                $attributes['exception'] = $exception::class;
+                $attributes['message'] = $exception->getMessage();
             }
 
             $this->recordJobOutcome($event->connectionName, $event->job, 'released', 'released', $attributes);
@@ -200,14 +202,19 @@ final class AgentEventSubscriber
             $startedAt = $this->outgoingRequestStartedAt[$key] ?? null;
             unset($this->outgoingRequestStartedAt[$key]);
             $uri = $event->request->toPsrRequest()->getUri();
-            $this->recorder->record('http', $event->request->method().' '.$uri->getHost(), [
+            $exception = data_get($event, 'exception');
+            $attributes = [
                 'method' => $event->request->method(),
                 'host' => $uri->getHost(),
                 'url' => $uri->getScheme().'://'.$uri->getAuthority().$uri->getPath(),
                 'phase' => 'connection_failed',
-                'exception' => $event->exception::class,
-                'message' => $event->exception->getMessage(),
-            ], $startedAt ? (int) round((hrtime(true) - $startedAt) / 1000) : null, 'failed');
+            ];
+            if ($exception instanceof Throwable) {
+                $attributes['exception'] = $exception::class;
+                $attributes['message'] = $exception->getMessage();
+            }
+
+            $this->recorder->record('http', $event->request->method().' '.$uri->getHost(), $attributes, $startedAt ? (int) round((hrtime(true) - $startedAt) / 1000) : null, 'failed');
         });
 
         if (config('larasignal.record_logs', true)) {
@@ -468,14 +475,53 @@ final class AgentEventSubscriber
         ] as $eventClass => [$phase, $status]) {
             Event::listen($eventClass, function (object $event) use ($phase, $status): void {
                 $user = data_get($event, 'user');
-                $this->recorder->record('authentication', Str::headline($phase), array_filter([
+                $this->recorder->record('authentication', Str::headline($phase), array_filter(array_merge([
                     'phase' => $phase,
                     'guard' => data_get($event, 'guard'),
                     'user_id' => is_object($user) && is_callable([$user, 'getAuthIdentifier']) ? $user->getAuthIdentifier() : null,
                     'remember' => data_get($event, 'remember'),
-                ], fn (mixed $value): bool => $value !== null), status: $status);
+                ], $this->authenticationRequestContext()), fn (mixed $value): bool => $value !== null), status: $status);
             });
         }
+
+        foreach ([
+            'Laravel\\Passport\\Events\\AccessTokenCreated' => 'access_token_created',
+            'Laravel\\Passport\\Events\\RefreshTokenCreated' => 'refresh_token_created',
+        ] as $eventClass => $phase) {
+            Event::listen($eventClass, function (object $event) use ($phase): void {
+                $tokenId = data_get($event, 'tokenId') ?? data_get($event, 'refreshTokenId');
+
+                $this->recorder->record('authentication', Str::headline($phase), array_filter(array_merge([
+                    'phase' => $phase,
+                    'provider' => 'passport',
+                    'user_id' => data_get($event, 'userId'),
+                    'client_id' => data_get($event, 'clientId'),
+                    'credential_id_hash' => filled($tokenId) ? hash('sha256', (string) $tokenId) : null,
+                ], $this->authenticationRequestContext()), fn (mixed $value): bool => $value !== null), status: 'completed');
+            });
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function authenticationRequestContext(): array
+    {
+        if (! app()->bound('request')) {
+            return [];
+        }
+
+        $request = app('request');
+        if (! $request instanceof Request) {
+            return [];
+        }
+
+        return [
+            'method' => $request->method(),
+            'route' => $request->route()?->uri(),
+            'path' => '/'.ltrim($request->path(), '/'),
+            'controller' => $request->route()?->getActionName(),
+            'ip_hash' => filled($request->ip()) ? hash('sha256', (string) $request->ip()) : null,
+            'user_agent' => $request->userAgent(),
+        ];
     }
 
     private function registerSecurityEvents(): void
@@ -530,17 +576,24 @@ final class AgentEventSubscriber
 
     private function registerQueueHealthEvents(): void
     {
-        Event::listen(JobQueued::class, function (JobQueued $event): void {
-            $payload = $event->payload();
-            $this->recorder->record('queue', (string) ($event->queue ?: 'default'), [
-                'phase' => 'queued',
-                'connection' => $event->connectionName,
-                'queue' => $event->queue ?: 'default',
-                'job' => data_get($payload, 'displayName'),
-                'job_id' => $event->id ?: data_get($payload, 'uuid'),
-                'delay_seconds' => $event->delay,
-            ], status: 'completed');
-        });
+        if (property_exists(JobQueued::class, 'queue') && property_exists(JobQueued::class, 'delay')) {
+            Event::listen(JobQueued::class, function (JobQueued $event): void {
+                $eventProperties = get_object_vars($event);
+                if (! array_key_exists('queue', $eventProperties) || ! array_key_exists('delay', $eventProperties)) {
+                    return;
+                }
+
+                $payload = $event->payload();
+                $this->recorder->record('queue', (string) ($event->queue ?: 'default'), [
+                    'phase' => 'queued',
+                    'connection' => $event->connectionName,
+                    'queue' => $event->queue ?: 'default',
+                    'job' => data_get($payload, 'displayName'),
+                    'job_id' => $event->id ?: data_get($payload, 'uuid'),
+                    'delay_seconds' => $event->delay,
+                ], status: 'completed');
+            });
+        }
         Event::listen(JobTimedOut::class, fn (JobTimedOut $event) => $this->recorder->record('queue', $event->job->resolveName(), [
             'phase' => 'timed_out',
             'connection' => $event->connectionName,
@@ -549,7 +602,7 @@ final class AgentEventSubscriber
         ], status: 'failed', severity: 'error'));
         Event::listen(QueueBusy::class, fn (QueueBusy $event) => $this->recorder->record('queue', $event->queue, [
             'phase' => 'busy',
-            'connection' => $event->connectionName,
+            'connection' => data_get($event, 'connectionName') ?? data_get($event, 'connection'),
             'queue' => $event->queue,
             'size' => $event->size,
         ], status: 'failed', severity: 'warning'));
@@ -571,9 +624,9 @@ final class AgentEventSubscriber
         Event::listen(WorkerStopping::class, fn (WorkerStopping $event) => $this->recorder->runtime('Queue worker stopped', [
             'phase' => 'worker_stopped',
             'exit_status' => $event->status,
-            'reason' => $event->reason?->name,
-            'jobs_processed' => $event->jobsProcessed,
-            'memory_mb' => $event->memoryUsage,
+            'reason' => data_get($event, 'reason.name'),
+            'jobs_processed' => data_get($event, 'jobsProcessed'),
+            'memory_mb' => data_get($event, 'memoryUsage'),
         ], $event->status === 0 ? 'completed' : 'failed'));
     }
 
