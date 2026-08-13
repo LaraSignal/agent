@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
--
+- 
+
+## 1.9.0
+- Fixed recursive self-monitoring of the configured ingestion endpoint that could saturate CPU and cause HTTP 504 responses for LaraSignal and connected applications.
 
 ## 1.8.0
 - Added first-class span, deployment, authentication, security, queue health, transaction, storage, and runtime telemetry with Activity analytics and configuration switches.
