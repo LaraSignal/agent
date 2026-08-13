@@ -1,0 +1,41 @@
+---
+description: LaraSignal Telemetry and Performance Monitoring Guidelines
+globs: *.php
+---
+
+# LaraSignal Telemetry & Programmatic API Guidelines
+
+Use the `LaraSignal` facade (`LaraSignal\Agent\Facades\LaraSignal`) to record performance spans, measure execution time, capture custom events, and attach contextual metadata in Laravel applications.
+
+## Programmatic API Examples
+
+### 1. Code Block Performance Measurement (`LaraSignal::measure`)
+```php
+use LaraSignal\Agent\Facades\LaraSignal;
+
+$payment = LaraSignal::measure('stripe.charge_customer', function () use ($amount) {
+    return Stripe::charges()->create(['amount' => $amount, 'currency' => 'usd']);
+});
+```
+
+### 2. Custom Domain Events (`LaraSignal::event`)
+```php
+use LaraSignal\Agent\Facades\LaraSignal;
+
+LaraSignal::event('OrderPlaced', ['order_id' => $order->id, 'amount' => $order->total]);
+```
+
+### 3. Global Context & Scoped Metadata (`LaraSignal::context`)
+```php
+use LaraSignal\Agent\Facades\LaraSignal;
+
+LaraSignal::context(['tenant_id' => $tenant->id]);
+LaraSignal::tag('checkout');
+```
+
+### 4. User Identification (`LaraSignal::user`)
+```php
+use LaraSignal\Agent\Facades\LaraSignal;
+
+LaraSignal::user($user);
+```
