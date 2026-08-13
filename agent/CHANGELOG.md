@@ -1,7 +1,13 @@
 # Changelog
 
 ## Unreleased
-- 
+-
+
+## 1.10.0
+- Added privacy-safe authentication request context with route, controller, method, path, hashed IP address, and user agent details.
+- Added optional Laravel Passport access and refresh token lifecycle telemetry with user, OAuth client, and hashed credential identifiers without requiring Passport as a dependency.
+- Added sanitized redirect destinations to request telemetry while removing OAuth codes, state values, and other query parameters from redirect headers.
+- Fixed queued notifications on Laravel 10 by disabling only `JobQueued` telemetry when queue and delay metadata are unavailable.
 
 ## 1.9.0
 - Fixed recursive self-monitoring of the configured ingestion endpoint that could saturate CPU and cause HTTP 504 responses for LaraSignal and connected applications.

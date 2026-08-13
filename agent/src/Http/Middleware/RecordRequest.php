@@ -24,6 +24,7 @@ final class RecordRequest
 
         $response = $next($request);
         $route = $request->route();
+        $redirectLocation = $response->isRedirection() ? $response->headers->get('Location') : null;
         $this->recorder->record('request', $request->method().' '.($request->route()?->uri() ?? $request->path()), [
             'method' => $request->method(),
             'route' => $route?->uri(),
@@ -31,9 +32,10 @@ final class RecordRequest
             'url' => $request->getSchemeAndHttpHost().'/'.ltrim($request->path(), '/'),
             'query' => $request->query(),
             'request_headers' => $request->headers->all(),
-            'response_headers' => $response->headers->all(),
+            'response_headers' => $this->safeResponseHeaders($response),
             'middleware' => $route?->gatherMiddleware() ?? [],
             'controller' => $route?->getActionName(),
+            'redirect_to' => $this->safeRedirectDestination($redirectLocation),
             'response_size' => strlen((string) $response->getContent()),
             'peak_memory_bytes' => memory_get_peak_usage(true),
         ], intdiv(hrtime(true) - $started, 1000), (string) $response->getStatusCode());
@@ -48,6 +50,33 @@ final class RecordRequest
         }
 
         return $response;
+    }
+
+    private function safeRedirectDestination(?string $location): ?string
+    {
+        if (blank($location)) {
+            return null;
+        }
+
+        $host = parse_url($location, PHP_URL_HOST);
+        $path = parse_url($location, PHP_URL_PATH);
+
+        return ($host ? $host : '').($path ?: '/');
+    }
+
+    /** @return array<string, array<int, string|null>> */
+    private function safeResponseHeaders(Response $response): array
+    {
+        $headers = $response->headers->all();
+
+        if (isset($headers['location'])) {
+            $headers['location'] = array_map(
+                fn (?string $location): ?string => $this->safeRedirectDestination($location),
+                $headers['location'],
+            );
+        }
+
+        return $headers;
     }
 
     public function terminate(): void
